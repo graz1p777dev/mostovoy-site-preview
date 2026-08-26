@@ -179,8 +179,39 @@
     if (!img.src.includes(curated)) img.src = curated;
   }
 
+  // Если у товара в базе вообще нет фото, сайт рисует не <img>, а
+  // буквенную заглушку (span.pcard__ph) — туда curatedPhoto подставить
+  // некому. Ищем имя рядом (pcard__name в карточке, h1 на странице товара)
+  // и подменяем заглушку на картинку сами.
+  function patchPlaceholder(span) {
+    if (!span || span.dataset.curatedPatched) return;
+    var card = span.closest(".pcard");
+    var name = card
+      ? card.querySelector(".pcard__name")?.textContent
+      : document.querySelector("h1")?.textContent;
+    var curated = curatedPhoto(name || "");
+    if (!curated) return;
+    span.dataset.curatedPatched = "1";
+    var img = document.createElement("img");
+    img.src = curated;
+    img.alt = name || "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.className = span.className.replace("pcard__ph", "").trim();
+    if (span.parentElement && span.parentElement.classList.contains("gallery__main")) {
+      img.id = "galleryMain";
+    }
+    span.replaceWith(img);
+  }
+
+  // Список встроен в бандл сайта в устаревшем виде (без новых моделей вроде
+  // Galaxy S26/Fold 8/Xiaomi) — переопределяем на всех страницах, не только
+  // на карточке товара, чтобы каталог и лента тоже брали актуальные фото.
   function scan() {
-    patch(document.getElementById("galleryMain"));
+    var img = document.getElementById("galleryMain");
+    if (img) patch(img);
+    document.querySelectorAll("img[alt]").forEach(patch);
+    document.querySelectorAll("span.pcard__ph").forEach(patchPlaceholder);
   }
 
   scan();
