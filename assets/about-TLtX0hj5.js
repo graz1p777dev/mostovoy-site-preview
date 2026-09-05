@@ -109,7 +109,7 @@ function renderAbout() {
           </div>
           <a class="about-address" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("ЦУМ Айчурек, проспект Чуй 155, Бишкек")}" target="_blank" rel="noopener">
             <span class="about-address__icon">${icons.pin}</span>
-            <span><small>Наш адрес</small><b>ТЦ ЦУМ «Айчурек»</b><em>просп. Чуй, 155 · 1 этаж · отдел D14</em><strong>Открыть на карте</strong></span>
+            <span><small>Наш адрес</small><b>ТЦ ЦУМ «Айчурек»</b><em>просп. Чуй, 155 · 1 этаж · отделы A9 и D14</em><strong>Открыть на карте</strong></span>
           </a>
         </div>
       </section>
