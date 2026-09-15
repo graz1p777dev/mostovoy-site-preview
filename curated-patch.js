@@ -217,7 +217,7 @@
     if (href) {
       var m = href.match(/[?&]id=([^&]+)/);
       if (m) id = decodeURIComponent(m[1]);
-    } else if (img.id === "galleryMain") {
+    } else if (img.id === "galleryMain" || img.closest(".gallery__main")) {
       id = new URLSearchParams(location.search).get("id");
     }
     if (!id) return null;
