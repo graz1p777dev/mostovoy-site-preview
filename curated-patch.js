@@ -173,20 +173,73 @@
   { test: /pocket ?3/i, image: "/images/products/other/dji-pocket-3.webp" },  // DJI Pocket 3
 ];
 
-  function curatedPhoto(name) {
+  // Фото под конкретный цвет — раньше все цвета одной модели показывали
+  // одно и то же фото (первое подошедшее по CURATED_PHOTOS).
+  var CURATED_PHOTOS_BY_COLOR = [
+    { nameTest: /iphone 17 pro/i, colorTest: /син|blue/i, image: "/images/products/apple/iphone-17-pro-blue.webp" },
+    { nameTest: /iphone 17 pro/i, colorTest: /оранж|orange/i, image: "/images/products/apple/iphone-17-pro-orange.webp" },
+    { nameTest: /iphone 17 pro/i, colorTest: /бел|silver|серебр/i, image: "/images/products/apple/iphone-17-pro-silver.webp" },
+  ];
+
+  function curatedPhoto(name, color) {
     var value = String(name || "");
+    if (color) {
+      for (var j = 0; j < CURATED_PHOTOS_BY_COLOR.length; j++) {
+        var row = CURATED_PHOTOS_BY_COLOR[j];
+        if (row.nameTest.test(value) && row.colorTest.test(String(color))) return row.image;
+      }
+    }
     for (var i = 0; i < CURATED_PHOTOS.length; i++) {
       if (CURATED_PHOTOS[i].test.test(value)) return CURATED_PHOTOS[i].image;
     }
     return "";
   }
 
+  // id -> color, из живого каталога — картинки сами по себе не знают цвет
+  // товара, только его название (alt), поэтому подтягиваем цвет по id из
+  // ссылки на товар (?id=...) рядом с картинкой или из адресной строки.
+  var catalogById = null;
+  var catalogPromise = fetch("/api/catalog")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var list = data.products || data;
+      catalogById = {};
+      list.forEach(function (p) { catalogById[String(p.id)] = p; });
+      scan();
+    })
+    .catch(function () {});
+
+  function colorForImg(img) {
+    if (!catalogById) return null;
+    var link = img.closest("a[href*='product.html?id=']") || img.closest(".pcard");
+    var href = link ? link.getAttribute("href") || link.querySelector("a[href*='product.html?id=']")?.getAttribute("href") : null;
+    var id = null;
+    if (href) {
+      var m = href.match(/[?&]id=([^&]+)/);
+      if (m) id = decodeURIComponent(m[1]);
+    } else if (img.id === "galleryMain") {
+      id = new URLSearchParams(location.search).get("id");
+    }
+    if (!id) return null;
+    var product = catalogById[id];
+    return product ? product.color : null;
+  }
+
   function patch(img) {
-    if (!img || img.dataset.curatedPatched) return;
+    if (!img || img.dataset.curatedPatched === "final") return;
     var name = img.getAttribute("alt") || "";
-    var curated = curatedPhoto(name);
+    if (!catalogById) {
+      // Каталог с цветами ещё не загрузился — временно показываем фото без
+      // учёта цвета, финальный (с учётом цвета) вариант подставится ниже,
+      // когда придёт ответ /api/catalog и снова вызовется scan().
+      var provisional = curatedPhoto(name, null);
+      if (provisional && !img.src.includes(provisional)) img.src = provisional;
+      return;
+    }
+    var color = colorForImg(img);
+    var curated = curatedPhoto(name, color);
     if (!curated) return;
-    img.dataset.curatedPatched = "1";
+    img.dataset.curatedPatched = "final";
     if (!img.src.includes(curated)) img.src = curated;
   }
 
