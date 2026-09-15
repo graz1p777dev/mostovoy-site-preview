@@ -54,7 +54,14 @@
         new Set(list.map(function (p) { return p.brand; }).filter(Boolean))
       ).sort(function (a, b) { return a.localeCompare(b, "ru"); });
       if (!brands.length) return;
+      // Содержимое <main> рисует другой скрипт сайта уже после того, как этот
+      // файл выполнился (fetch у нас тоже асинхронный) — пробуем сразу и потом
+      // ещё по каждому изменению DOM, пока не получится.
       mount(brands);
+      new MutationObserver(function () { mount(brands); }).observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
     })
     .catch(function () {});
 })();
