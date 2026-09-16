@@ -5,10 +5,10 @@
 // странице товара (см. variant-picker.js). Логика группировки — та же, что
 // и в variants.ts основного сайта.
 (function () {
-  var STORAGE_RE = /\b\d+(?:[.,]\d+)?\s*\/\s*\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)?\b/gi;
-  var STORAGE_UNIT_RE = /\b\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб|mb|мб)\b/gi;
-  var CONN_RE = /\b(?:wi-?fi|5g|4g|lte|e-?sim|dual\s*sim|физическая\s*sim|актив(?:ирован)?|2\s*sim)\b/gi;
-  var SIZE_RE = /\b\d{2}\s*(?:mm|мм)\b/gi;
+  var STORAGE_RE = /(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?\s*\/\s*\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)?(?![\p{L}\p{N}])/giu;
+  var STORAGE_UNIT_RE = /(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб|mb|мб)(?![\p{L}\p{N}])/giu;
+  var CONN_RE = /(?<![\p{L}\p{N}])(?:wi-?fi|5g|4g|lte|e-?sim|dual\s*sim|физическая\s*sim|актив(?:ирован)?|active|2\s*sim)(?![\p{L}\p{N}])/giu;
+  var SIZE_RE = /(?<![\p{L}\p{N}])\d{2}\s*(?:mm|мм)(?![\p{L}\p{N}])/giu;
 
   function stripModelNoise(name) {
     return (" " + name + " ")

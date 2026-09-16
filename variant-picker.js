@@ -5,10 +5,10 @@
 // window.__mostovoyRender (assets/product-variants.js) — цена, фото и
 // кнопки «Купить/В корзину» при этом относятся уже к выбранной строке.
 (function () {
-  var STORAGE_RE = /\b\d+(?:[.,]\d+)?\s*\/\s*\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)?\b/gi;
-  var STORAGE_UNIT_RE = /\b\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб|mb|мб)\b/gi;
-  var CONN_RE = /\b(?:wi-?fi|5g|4g|lte|e-?sim|dual\s*sim|физическая\s*sim|актив(?:ирован)?|2\s*sim)\b/gi;
-  var SIZE_RE = /\b(\d{2})\s*(?:mm|мм)\b/i;
+  var STORAGE_RE = /(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?\s*\/\s*\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)?(?![\p{L}\p{N}])/giu;
+  var STORAGE_UNIT_RE = /(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб|mb|мб)(?![\p{L}\p{N}])/giu;
+  var CONN_RE = /(?<![\p{L}\p{N}])(?:wi-?fi|5g|4g|lte|e-?sim|dual\s*sim|физическая\s*sim|актив(?:ирован)?|active|2\s*sim)(?![\p{L}\p{N}])/giu;
+  var SIZE_RE = /(?<![\p{L}\p{N}])(\d{2})\s*(?:mm|мм)(?![\p{L}\p{N}])/iu;
 
   function stripModelNoise(name) {
     return (" " + name + " ")
@@ -54,12 +54,12 @@
     var id = String(p.id || "");
     var out = { storage: null, ram: null, sim: null, size: null, color: null };
 
-    var pair = name.match(/\b(\d+)\s*\/\s*(\d+)\s*(gb|гб|tb|тб)?\b/i);
+    var pair = name.match(/(?<![\p{L}\p{N}])(\d+)\s*\/\s*(\d+)\s*(gb|гб|tb|тб)?(?![\p{L}\p{N}])/iu);
     if (pair) {
       out.ram = pair[1] + " ГБ";
       out.storage = fmtStorage(pair[2], pair[3] || "gb");
     } else {
-      var units = name.match(/\b\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)\b/gi) || [];
+      var units = name.match(/(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?\s*(?:gb|гб|tb|тб)(?![\p{L}\p{N}])/giu) || [];
       if (units.length >= 2) {
         var r = units[0].match(/(\d+(?:[.,]\d+)?)\s*(\w+)/i);
         var s = units[units.length - 1].match(/(\d+(?:[.,]\d+)?)\s*(\w+)/i);
