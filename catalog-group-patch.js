@@ -70,7 +70,9 @@
     style.textContent =
       ".pcard__swatches{display:flex;gap:5px;margin:6px 0 2px}" +
       ".pcard__swatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex:0 0 auto}" +
-      ".pcard__swatch--more{width:auto;height:14px;border-radius:7px;padding:0 5px;font-size:10px;line-height:14px;color:var(--ink-2,#6e6e73);border:1px solid var(--line,#d2d2d7);background:#fff}";
+      ".pcard__swatch--more{width:auto;height:14px;border-radius:7px;padding:0 5px;font-size:10px;line-height:14px;color:var(--ink-2,#6e6e73);border:1px solid var(--line,#d2d2d7);background:#fff}" +
+      ".pcard__swatch{cursor:pointer;padding:0;box-sizing:border-box}" +
+      ".pcard__swatch.active{border-color:var(--accent,#e11d1d);border-width:2px}";
     document.head.appendChild(style);
   }
 
@@ -124,8 +126,8 @@
         if (c && c.parentElement) c.parentElement.removeChild(c);
       });
 
-      // Имя — самое короткое в группе (обычно это и есть «голая» модель).
-      var baseName = list.reduce(function (s, p) { return (p.name || "").length < s.length ? p.name : s; }, list[0].name || "");
+      // Имя модели без памяти/связи — «iPhone 17 Pro», а не «iPhone 17 Pro 1TB eSIM».
+      var baseName = stripModelNoise(cheapest.name || "");
       var nameEl = repCard.querySelector(".pcard__name");
       if (nameEl) nameEl.textContent = baseName;
 
@@ -142,13 +144,24 @@
         if (c && !seen[c]) { seen[c] = true; colors.push(c); }
       });
       if (colors.length > 1 && !repCard.querySelector(".pcard__swatches")) {
+        var img = repCard.querySelector(".pcard__media img");
+        var defaultSrc = img ? img.getAttribute("src") : null;
         var wrap = document.createElement("div");
         wrap.className = "pcard__swatches";
-        colors.slice(0, 3).forEach(function (c) {
+        colors.slice(0, 3).forEach(function (c, i) {
           var dot = document.createElement("span");
-          dot.className = "pcard__swatch";
+          dot.className = "pcard__swatch" + (i === 0 ? " active" : "");
           dot.style.background = colorHex(c);
           dot.title = c;
+          // Клик по кружку меняет фото на карточке на выбранный цвет, но не
+          // переходит на страницу товара — сама пилюля не внутри <a>.
+          dot.addEventListener("click", function () {
+            if (!img) return;
+            var photo = (window.__curatedPhoto && window.__curatedPhoto(baseName, c)) || defaultSrc;
+            if (photo) img.src = photo;
+            wrap.querySelectorAll(".pcard__swatch").forEach(function (s) { s.classList.remove("active"); });
+            dot.classList.add("active");
+          });
           wrap.appendChild(dot);
         });
         if (colors.length > 3) {
