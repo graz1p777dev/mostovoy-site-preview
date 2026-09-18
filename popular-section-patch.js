@@ -39,7 +39,14 @@
         .sort(function (a, b) { return a.price - b.price; });
       var seenBase = {};
       for (var i = 0; i < matches.length && picks.length < 999; i++) {
-        var base = String(matches[i].name || "").toLowerCase().slice(0, 16);
+        // "Apple iPhone 17e 256 GB" и "iPhone 17e 256GB" — один и тот же
+        // товар из разных сообщений Telegram; сравниваем без "apple" и
+        // без пробелов, чтобы не показать оба.
+        var base = String(matches[i].name || "")
+          .toLowerCase()
+          .replace(/\bapple\b/g, "")
+          .replace(/\s+/g, "")
+          .slice(0, 18);
         if (seenBase[base]) continue;
         seenBase[base] = true;
         picks.push(matches[i]);
