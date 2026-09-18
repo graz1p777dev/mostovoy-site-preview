@@ -76,6 +76,40 @@
     document.head.appendChild(style);
   }
 
+  // Порядок раздела по умолчанию: iPhone → iPad → MacBook → остальная
+  // техника Apple → DJI/Meta(Ray-Ban)/Dyson → всё остальное. Внутри каждой
+  // группы порядок как отдал сервер (обычно по добавлению в базу).
+  function bucketRank(p) {
+    var name = String(p.name || "").toLowerCase();
+    var brand = String(p.brand || "");
+    var cat = String(p.category || "");
+    if (name.indexOf("iphone") !== -1) return 0;
+    if (name.indexOf("ipad") !== -1 || cat === "iPad" || cat === "Планшеты") return 1;
+    if (name.indexOf("macbook") !== -1 || cat === "MacBook") return 2;
+    if (brand === "Apple") return 3;
+    if (brand === "DJI" || brand === "Meta" || brand === "Dyson") return 4;
+    return 5;
+  }
+
+  function reorderByBucket(grid, byId) {
+    var sortSel = document.getElementById("sort");
+    if (sortSel && sortSel.value && sortSel.value !== "default") return;
+    var cards = Array.from(grid.querySelectorAll(".pcard"));
+    var idByCard = new Map();
+    cards.forEach(function (card) {
+      var link = card.querySelector("a[href*='product.html?id=']");
+      var href = link && link.getAttribute("href");
+      var m = href && href.match(/[?&]id=([^&]+)/);
+      if (m) idByCard.set(card, decodeURIComponent(m[1]));
+    });
+    var withRank = cards.map(function (card, i) {
+      var p = byId[idByCard.get(card)];
+      return { card: card, i: i, rank: p ? bucketRank(p) : 5 };
+    });
+    withRank.sort(function (a, b) { return a.rank - b.rank || a.i - b.i; });
+    withRank.forEach(function (entry) { grid.appendChild(entry.card); });
+  }
+
   function plural(n, a, b, c) {
     var m10 = n % 10, m100 = n % 100;
     if (m10 === 1 && m100 !== 11) return a;
@@ -175,6 +209,10 @@
       }
     });
 
+    var productById = {};
+    present.forEach(function (p) { productById[String(p.id)] = p; });
+    reorderByBucket(grid, productById);
+
     var remaining = grid.querySelectorAll(".pcard").length;
     var countEl = document.querySelector(".catalog__count");
     if (countEl) countEl.textContent = remaining + " " + plural(remaining, "товар", "товара", "товаров");
@@ -196,6 +234,17 @@
     var grid = document.querySelector(".pgrid");
     if (grid && grid.getAttribute(MARK) !== "1") tick();
   }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // Смена сортировки перестраивает содержимое того же .pgrid без замены
+  // узла — MutationObserver выше это не ловит (атрибут-метка остаётся),
+  // поэтому дополнительно слушаем сам select.
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "sort") {
+      var grid = document.querySelector(".pgrid");
+      if (grid) grid.removeAttribute(MARK);
+      setTimeout(tick, 50);
+    }
+  });
 
   tick();
 })();
