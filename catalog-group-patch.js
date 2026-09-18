@@ -84,7 +84,7 @@
     var brand = String(p.brand || "");
     var cat = String(p.category || "");
     if (name.indexOf("iphone") !== -1) return 0;
-    if (name.indexOf("ipad") !== -1 || cat === "iPad" || cat === "Планшеты") return 1;
+    if (name.indexOf("ipad") !== -1 || (cat === "iPad" && brand === "Apple")) return 1;
     if (name.indexOf("macbook") !== -1 || cat === "MacBook") return 2;
     if (brand === "Apple") return 3;
     if (brand === "DJI" || brand === "Meta" || brand === "Dyson") return 4;
